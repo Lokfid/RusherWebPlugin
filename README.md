@@ -6,3 +6,4 @@ p.s release is not provided because ^
 - add back and forward buttons
 - make current link accessible
 - rework for rusher api/window manager
+- add a better way to open browser itself
