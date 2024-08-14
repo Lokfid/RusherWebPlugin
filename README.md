@@ -6,4 +6,4 @@ p.s release is not provided because ^
 - add back and forward buttons (right now can be used with mouse button 3 and 4)
 - make current link accessible
 - rework for rusher api/window manager
-- add a better way to open browser itself
+- ~~add a better way to open browser itself~~ (kinda)
