@@ -3,6 +3,7 @@ p.s release is not provided because ^
 
 
 ## Roadmap
-- add back and forward buttons
+- add back and forward buttons (right now can be used with mouse button 3 and 4)
 - make current link accessible
 - rework for rusher api/window manager
+- add a better way to open browser itself
