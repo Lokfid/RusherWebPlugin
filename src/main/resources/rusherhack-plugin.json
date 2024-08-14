@@ -1,0 +1,12 @@
+{
+  "Plugin-Class": "org.lokfid.BrowserPlugin",
+  "Name": "Example Plugin",
+  "Version": "${plugin_version}",
+  "Description": "Example rusherhack plugin",
+  "Authors": [
+    "Lokfid"
+  ],
+  "Minecraft-Versions": [
+    "1.20.1"
+  ]
+}
