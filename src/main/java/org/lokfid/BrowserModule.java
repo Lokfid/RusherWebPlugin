@@ -17,7 +17,7 @@ public class BrowserModule extends ToggleableModule {
 	public BrowserModule() {
 		super("Browser", "Example plugin module", ModuleCategory.CLIENT);
 	}
-	
+
 	BasicBrowser basicBrowser = new BasicBrowser(Component.literal("Basic Browser"));
 	@Override
 	public ModuleCommand createCommand() {
@@ -30,4 +30,15 @@ public class BrowserModule extends ToggleableModule {
 
 		};
 	}
+
+	@Override
+	public void onEnable() {
+		if(super.isToggled()){
+			mc.setScreen(basicBrowser);
+			super.toggle();
+		}
+			else {
+				return;
+		}
+		}
 }

@@ -71,7 +71,6 @@ public class BasicBrowser extends Screen {
         browser.close();
 
     }
-
     @Override
     public void render(GuiGraphics guiGraphics, int i, int j, float f) {
         super.render(guiGraphics, i, j, f);
