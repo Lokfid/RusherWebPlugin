@@ -12,6 +12,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.client.renderer.GameRenderer;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import org.rusherhack.client.api.utils.ChatUtils;
 
 public class BasicBrowser extends Screen {
 
@@ -93,6 +94,12 @@ public class BasicBrowser extends Screen {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         browser.sendMousePress(mouseX(mouseX), mouseY(mouseY), button);
         browser.setFocus(true);
+        if (button == 3 && browser.canGoBack()){
+            browser.goBack();
+        }
+        if (button == 4 && browser.canGoForward()){
+            browser.goForward();
+        }
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
