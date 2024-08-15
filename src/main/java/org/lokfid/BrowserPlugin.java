@@ -1,30 +1,42 @@
 package org.lokfid;
 
+import com.cinemamod.mcef.MCEFBrowser;
 import org.rusherhack.client.api.RusherHackAPI;
 import org.rusherhack.client.api.plugin.Plugin;
 
 /**
- * Example rusherhack plugin
- *
- * @author John200410
+ * Browser plugin
+ * @author Lokfid
+ * @author Doogie
  */
 public class BrowserPlugin extends Plugin {
-	
-	@Override
-	public void onLoad() {
-		
-		//logger
-		this.getLogger().info("Web plugin loaded!");
-		
-		//creating and registering a new module
-		final BrowserModule exampleModule = new BrowserModule();
-		RusherHackAPI.getModuleManager().registerFeature(exampleModule);
 
-	}
-	
-	@Override
-	public void onUnload() {
-		this.getLogger().info("Web plugin unloaded!");
-	}
-	
+    private MCEFBrowser browser;
+
+    @Override
+    public void onLoad() {
+
+        //creating and registering a new module
+        RusherHackAPI.getModuleManager().registerFeature(new BrowserModule(this));
+        RusherHackAPI.getHudManager().registerFeature(new BrowserHUDPin(this));
+
+        //logger
+        this.getLogger().info("Web plugin loaded!");
+
+    }
+
+    public MCEFBrowser getBrowser() {
+        return browser;
+    }
+
+    public void setBrowser(MCEFBrowser browser) {
+        this.browser = browser;
+    }
+
+    @Override
+    public void onUnload() {
+        if (browser != null) {
+            browser.close();
+        }
+    }
 }

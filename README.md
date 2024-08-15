@@ -1,4 +1,4 @@
-# Warning : this plugin is very early into the dev process so using it isnt practical, make sure you know what you are doing before trying it
+# Warning : this plugin is very early into the dev process so using it isn't practical, make sure you know what you are doing before trying it
 p.s release is not provided because ^
 
 
