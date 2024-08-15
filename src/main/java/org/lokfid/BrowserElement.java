@@ -1,82 +1,88 @@
 package org.lokfid;
+
 import com.cinemamod.mcef.MCEF;
-import com.cinemamod.mcef.MCEFBrowser;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.Component;
-import net.minecraft.client.renderer.GameRenderer;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import org.rusherhack.client.api.utils.ChatUtils;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.network.chat.Component;
+import org.rusherhack.client.api.Globals;
 
-public class BasicBrowser extends Screen {
+public class BrowserElement extends Screen implements Globals {
 
-    public MCEFBrowser browser;
-
-    private final Minecraft minecraft = Minecraft.getInstance();
     private static final int BROWSER_DRAW_OFFSET = 20;
+    private final BrowserPlugin plugin;
 
-    protected BasicBrowser(Component title) {
-        super(title);
+    private String previousWebpageStorage = "https://www.google.com/";
+
+    protected BrowserElement(BrowserPlugin plugin) {
+        super(Component.literal("Basic Browser"));
+        this.plugin = plugin;
     }
 
     @Override
     protected void init() {
         super.init();
-        if (browser == null) {
-            String url = "https://www.google.com";
+        if (plugin.getBrowser() == null) {
+            String url = previousWebpageStorage;
             boolean transparent = true;
-            browser = MCEF.createBrowser(url, transparent);
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                if (plugin.getBrowser() != null) {
+                    plugin.getBrowser().close();
+                }
+            }));
+            plugin.setBrowser(MCEF.createBrowser(url, transparent));
             resizeBrowser();
         }
     }
 
 
     private int mouseX(double x) {
-        return (int) ((x - BROWSER_DRAW_OFFSET) * minecraft.getWindow().getGuiScale());
+        return (int) ((x - BROWSER_DRAW_OFFSET) * mc.getWindow().getGuiScale());
     }
 
     private int mouseY(double y) {
-        return (int) ((y - BROWSER_DRAW_OFFSET) * minecraft.getWindow().getGuiScale());
+        return (int) ((y - BROWSER_DRAW_OFFSET) * mc.getWindow().getGuiScale());
     }
 
     private int scaleX(double x) {
-        return (int) ((x - BROWSER_DRAW_OFFSET * 2) * minecraft.getWindow().getGuiScale());
+        return (int) ((x - BROWSER_DRAW_OFFSET * 2) * mc.getWindow().getGuiScale());
     }
 
     private int scaleY(double y) {
-        return (int) ((y - BROWSER_DRAW_OFFSET * 2) * minecraft.getWindow().getGuiScale());
+        return (int) ((y - BROWSER_DRAW_OFFSET * 2) * mc.getWindow().getGuiScale());
     }
 
 
     private void resizeBrowser() {
         if (width > 100 && height > 100) {
-            browser.resize(scaleX(width), scaleY(height));
+            plugin.getBrowser().resize(scaleX(width), scaleY(height));
         }
     }
 
 
     @Override
-    public void resize(Minecraft minecraft, int i, int j) {
-        super.resize(minecraft, i, j);
+    public void resize(Minecraft mc, int i, int j) {
+        super.resize(mc, i, j);
         resizeBrowser();
     }
 
     public void close() {
-        browser.close();
+        plugin.getBrowser().close();
 
     }
     @Override
-    public void render(GuiGraphics guiGraphics, int i, int j, float f) {
-        super.render(guiGraphics, i, j, f);
+    public void render(GuiGraphics guiGraphics, int x, int y, float partialTick) {
+        resizeBrowser();
+        super.render(guiGraphics, x, y, partialTick);
         RenderSystem.disableDepthTest();
         RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
-        RenderSystem.setShaderTexture(0, browser.getRenderer().getTextureID());
+        RenderSystem.setShaderTexture(0, plugin.getBrowser().getRenderer().getTextureID());
         Tesselator t = Tesselator.getInstance();
         BufferBuilder buffer = t.getBuilder();
         buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
@@ -91,27 +97,27 @@ public class BasicBrowser extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        browser.sendMousePress(mouseX(mouseX), mouseY(mouseY), button);
-        browser.setFocus(true);
-        if (button == 3 && browser.canGoBack()){
-            browser.goBack();
+        plugin.getBrowser().sendMousePress(mouseX(mouseX), mouseY(mouseY), button);
+        plugin.getBrowser().setFocus(true);
+        if (button == 3 && plugin.getBrowser().canGoBack()){
+            plugin.getBrowser().goBack();
         }
-        if (button == 4 && browser.canGoForward()){
-            browser.goForward();
+        if (button == 4 && plugin.getBrowser().canGoForward()){
+            plugin.getBrowser().goForward();
         }
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        browser.sendMouseRelease(mouseX(mouseX), mouseY(mouseY), button);
-        browser.setFocus(true);
+        plugin.getBrowser().sendMouseRelease(mouseX(mouseX), mouseY(mouseY), button);
+        plugin.getBrowser().setFocus(true);
         return super.mouseReleased(mouseX, mouseY, button);
     }
 
     @Override
     public void mouseMoved(double mouseX, double mouseY) {
-        browser.sendMouseMove(mouseX(mouseX), mouseY(mouseY));
+        plugin.getBrowser().sendMouseMove(mouseX(mouseX), mouseY(mouseY));
         super.mouseMoved(mouseX, mouseY);
     }
 
@@ -122,29 +128,29 @@ public class BasicBrowser extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
-        browser.sendMouseWheel(mouseX(mouseX), mouseY(mouseY), delta, 0);
+        plugin.getBrowser().sendMouseWheel(mouseX(mouseX), mouseY(mouseY), delta, 0);
         return super.mouseScrolled(mouseX, mouseY, delta);
     }
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        browser.sendKeyPress(keyCode, scanCode, modifiers);
-        browser.setFocus(true);
+        plugin.getBrowser().sendKeyPress(keyCode, scanCode, modifiers);
+        plugin.getBrowser().setFocus(true);
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
     @Override
     public boolean keyReleased(int keyCode, int scanCode, int modifiers) {
-        browser.sendKeyRelease(keyCode, scanCode, modifiers);
-        browser.setFocus(true);
+        plugin.getBrowser().sendKeyRelease(keyCode, scanCode, modifiers);
+        plugin.getBrowser().setFocus(true);
         return super.keyReleased(keyCode, scanCode, modifiers);
     }
 
     @Override
     public boolean charTyped(char codePoint, int modifiers) {
         if (codePoint == (char) 0) return false;
-        browser.sendKeyTyped(codePoint, modifiers);
-        browser.setFocus(true);
+        plugin.getBrowser().sendKeyTyped(codePoint, modifiers);
+        plugin.getBrowser().setFocus(true);
         return super.charTyped(codePoint, modifiers);
     }
 
