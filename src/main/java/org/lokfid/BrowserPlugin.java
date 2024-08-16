@@ -23,6 +23,12 @@ public class BrowserPlugin extends Plugin {
         //logger
         this.getLogger().info("Web plugin loaded!");
 
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            if (getBrowser() != null) {
+                getBrowser().close();
+            }
+        }));
+
     }
 
     public MCEFBrowser getBrowser() {
@@ -39,4 +45,5 @@ public class BrowserPlugin extends Plugin {
             browser.close();
         }
     }
+
 }

@@ -30,13 +30,7 @@ public class BrowserElement extends Screen implements Globals {
         super.init();
         if (plugin.getBrowser() == null) {
             String url = previousWebpageStorage;
-            boolean transparent = true;
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                if (plugin.getBrowser() != null) {
-                    plugin.getBrowser().close();
-                }
-            }));
-            plugin.setBrowser(MCEF.createBrowser(url, transparent));
+            plugin.setBrowser(MCEF.createBrowser(url, true));
             resizeBrowser();
         }
     }
