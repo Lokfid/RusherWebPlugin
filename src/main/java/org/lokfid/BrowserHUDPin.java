@@ -30,9 +30,6 @@ public class BrowserHUDPin extends ResizeableHudElement {
     final Setting<Float> aspectRatioV = new NumberSetting<>("Aspect Ratio V",
             "The X element of the aspect ratio", 3.0f, 0.1f, 48f);
 
-    final Setting<Integer> openGLSlot = new NumberSetting<>("OpenGL Slot",
-            "The slot to use for the browser", 1, 0, 64);
-
     public BrowserHUDPin(BrowserPlugin plugin) {
         super("Browser");
         setDescription("Shows the browser window in the GUI");
@@ -42,8 +39,7 @@ public class BrowserHUDPin extends ResizeableHudElement {
         registerSettings(
                 engineScale,
                 aspectRatioH,
-                aspectRatioV,
-                openGLSlot
+                aspectRatioV
         );
     }
 
@@ -100,7 +96,7 @@ public class BrowserHUDPin extends ResizeableHudElement {
 
         //RenderSystem.disableDepthTest();
         RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
-        RenderSystem.setShaderTexture(openGLSlot.getValue(), plugin.getBrowser().getRenderer().getTextureID());
+        RenderSystem.setShaderTexture(0, plugin.getBrowser().getRenderer().getTextureID());
 
         Tesselator t = Tesselator.getInstance();
         BufferBuilder buffer = t.getBuilder();
