@@ -1,5 +1,6 @@
 package org.lokfid;
 
+import com.cinemamod.mcef.MCEF;
 import com.cinemamod.mcef.MCEFBrowser;
 import org.rusherhack.client.api.RusherHackAPI;
 import org.rusherhack.client.api.plugin.Plugin;
@@ -16,27 +17,28 @@ public class BrowserPlugin extends Plugin {
     @Override
     public void onLoad() {
 
-        //creating and registering a new module
-        RusherHackAPI.getModuleManager().registerFeature(new BrowserModule(this));
-        RusherHackAPI.getHudManager().registerFeature(new BrowserHUDPin(this));
+        if (!MCEF.isInitialized())
+            MCEF.initialize();
 
-        //logger
-        this.getLogger().info("Web plugin loaded!");
+        //creating and registering a new module
+        RusherHackAPI.getWindowManager().registerFeature(new BrowserWindow(this));
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            if (getBrowser() != null) {
+            if (hasBrowser()) {
                 getBrowser().close();
             }
         }));
 
     }
 
-    public MCEFBrowser getBrowser() {
-        return browser;
+    public boolean hasBrowser() {
+        return browser != null;
     }
 
-    public void setBrowser(MCEFBrowser browser) {
-        this.browser = browser;
+    public MCEFBrowser getBrowser() {
+        if (browser == null)
+            browser = MCEF.createBrowser("https://start.duckduckgo.com/", true);
+        return browser;
     }
 
     @Override
