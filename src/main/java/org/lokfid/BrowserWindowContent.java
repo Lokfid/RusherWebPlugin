@@ -42,6 +42,7 @@ public class BrowserWindowContent extends SimpleView implements Globals {
         }
     }
 
+    // Generates buttons and url query box
     private List<? extends WindowContent> generateMembers(BrowserPlugin plugin, Window window) {
         List<WindowContent> components = new ArrayList<>();
         int buttonHeight = 12;
@@ -54,13 +55,18 @@ public class BrowserWindowContent extends SimpleView implements Globals {
                 () -> plugin.getBrowser().reloadIgnoreCache()));
         url = new TextFieldComponent(window, plugin.getBrowser().getURL(),
                 400 - buttonWidth * components.size());
-        url.setReturnCallback(text -> {
-            plugin.getBrowser().loadURL(text);
-            plugin.getBrowser().setFocus(true);
-            url.setFocused(false);
-        });
+        url.setReturnCallback(this::processSearchQuery);
         components.add(url);
         return components;
+    }
+
+    private void processSearchQuery(String text) {
+        if (text.contains("://") || text.split("\\.").length > 1) {
+            plugin.getBrowser().loadURL(text);
+            plugin.getBrowser().setFocus(true);
+        } else // we have a search query
+            plugin.getBrowser().loadURL(String.format("https://duckduckgo.com/?q=%s", text));
+        url.setFocused(false);
     }
 
     @Override
@@ -120,7 +126,7 @@ public class BrowserWindowContent extends SimpleView implements Globals {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         plugin.getBrowser().sendMousePress(
                 (int) ((mouseX - getX()) * 2),
-                (int) ((mouseY - getY() + 12) * 2),
+                (int) ((mouseY - getY()- 12) * 2),
                 button
         );
         if (button == GLFW.GLFW_MOUSE_BUTTON_4 && plugin.getBrowser().canGoBack())
@@ -136,7 +142,7 @@ public class BrowserWindowContent extends SimpleView implements Globals {
         if (!isHovered(mouseX, mouseY)) return super.mouseScrolled(mouseX, mouseY, delta);
         plugin.getBrowser().sendMouseWheel(
                 (int) ((mouseX - getX()) * 2),
-                (int) ((mouseY - getY() + 12) * 2),
+                (int) ((mouseY - getY()- 12) * 2),
                 delta,
                 0
         );
@@ -148,7 +154,7 @@ public class BrowserWindowContent extends SimpleView implements Globals {
     public void mouseReleased(double mouseX, double mouseY, int button) {
         plugin.getBrowser().sendMouseRelease(
                 (int) ((mouseX - getX()) * 2),
-                (int) ((mouseY - getY() + 12) * 2),
+                (int) ((mouseY - getY()- 12) * 2),
                 button
         );
         plugin.getBrowser().setFocus(true);
