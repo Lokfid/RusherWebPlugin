@@ -1,9 +1,17 @@
-# Warning : this plugin is very early into the dev process so using it isnt practical, make sure you know what you are doing before trying it
-p.s release is not provided because ^
 
+# Rusherhack Web Plugin
 
-## Roadmap
-- add back and forward buttons (right now can be used with mouse button 3 and 4)
-- make current link accessible
-- rework for rusher api/window manager
-- ~~add a better way to open browser itself~~ (kinda)
+This plugin provides a Chromium-based web-browser accessible through the Window API.
+
+## Usage
+- Download and install the mod [MCEF](https://modrinth.com/mod/mcef)
+- Download the plugin from the Releases tab into your `.minecraft/Rusherhack/Plugins` folder
+- Edit the launch arguments for the instance of Minecraft you are loading RusherHack from to include the entry
+`-Drusherhack.enablePlugins=true`
+- Launch your RusherHack instance and open the Windows menu. A new window called Browser should appear
+
+## TODO:
+- Graphic buttons
+- Persistent cookie storage
+- Configurable homepage
+- Tabs
