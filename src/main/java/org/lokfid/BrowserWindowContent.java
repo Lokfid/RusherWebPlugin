@@ -3,6 +3,7 @@ package org.lokfid;
 import org.lwjgl.glfw.GLFW;
 import org.rusherhack.client.api.Globals;
 import org.rusherhack.client.api.RusherHackAPI;
+import org.rusherhack.client.api.events.client.input.EventMouse;
 import org.rusherhack.client.api.feature.window.Window;
 import org.rusherhack.client.api.render.graphic.VectorGraphic;
 import org.rusherhack.client.api.ui.window.content.WindowContent;
@@ -10,6 +11,7 @@ import org.rusherhack.client.api.ui.window.content.component.ButtonComponent;
 import org.rusherhack.client.api.ui.window.content.component.TextFieldComponent;
 import org.rusherhack.client.api.ui.window.view.SimpleView;
 import org.rusherhack.client.api.ui.window.view.WindowView;
+import org.rusherhack.core.event.subscribe.Subscribe;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -24,6 +26,8 @@ public class BrowserWindowContent extends SimpleView implements Globals {
     private final BrowserPlugin plugin;
     private final VectorGraphic[] icons = new VectorGraphic[3];
     private TextFieldComponent url;
+
+    boolean subscribed;
 
     public BrowserWindowContent(BrowserPlugin plugin, Window window) {
         super(window, List.of());
@@ -61,12 +65,16 @@ public class BrowserWindowContent extends SimpleView implements Globals {
 
     @Override
     public void renderContent(double mouseX, double mouseY, WindowView parent) {
-        double guiScale = mc.getWindow().getGuiScale();
+
+        if (!subscribed) {
+            RusherHackAPI.getEventBus().subscribe(this);
+            subscribed = true;
+        }
 
         double y = getY() + 12;
-        plugin.getBrowser().sendMouseMove((int) ((mouseX - getX()) * guiScale), (int) ((mouseY - y) * guiScale));
         double height = getHeight() - 12;
-        plugin.getBrowser().resize((int) (getWidth() * guiScale), (int) (height * guiScale));
+        // todo: scale control
+        plugin.getBrowser().resize((int) (getWidth()) * 2, (int) (height) * 2);
 
         if (!url.isFocused())
             url.setValue(plugin.getBrowser().getURL());
@@ -98,12 +106,21 @@ public class BrowserWindowContent extends SimpleView implements Globals {
         }
     }
 
+    @Subscribe
+    public void mouseMoved(EventMouse.Move event) {
+        int mouseX = (int) ((event.getMouseX()) - getX() * 2);
+        int mouseY = (int) ((event.getMouseY()) - (getY() + 12) * 2);
+        plugin.getBrowser().sendMouseMove(
+                mouseX,
+                mouseY
+        );
+    }
+
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        double guiScale = mc.getWindow().getGuiScale();
         plugin.getBrowser().sendMousePress(
-                (int) ((mouseX - getX()) * guiScale),
-                (int) ((mouseY - getY()) * guiScale),
+                (int) ((mouseX - getX()) * 2),
+                (int) ((mouseY - getY() + 12) * 2),
                 button
         );
         if (button == GLFW.GLFW_MOUSE_BUTTON_4 && plugin.getBrowser().canGoBack())
@@ -117,10 +134,9 @@ public class BrowserWindowContent extends SimpleView implements Globals {
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
         if (!isHovered(mouseX, mouseY)) return super.mouseScrolled(mouseX, mouseY, delta);
-        double guiScale = mc.getWindow().getGuiScale();
         plugin.getBrowser().sendMouseWheel(
-                (int) ((mouseX - getX()) * guiScale),
-                (int) ((mouseY - getY()) * guiScale),
+                (int) ((mouseX - getX()) * 2),
+                (int) ((mouseY - getY() + 12) * 2),
                 delta,
                 0
         );
@@ -130,10 +146,9 @@ public class BrowserWindowContent extends SimpleView implements Globals {
 
     @Override
     public void mouseReleased(double mouseX, double mouseY, int button) {
-        double guiScale = mc.getWindow().getGuiScale();
         plugin.getBrowser().sendMouseRelease(
-                (int) ((mouseX - getX()) * guiScale),
-                (int) ((mouseY - getY()) * guiScale),
+                (int) ((mouseX - getX()) * 2),
+                (int) ((mouseY - getY() + 12) * 2),
                 button
         );
         plugin.getBrowser().setFocus(true);
