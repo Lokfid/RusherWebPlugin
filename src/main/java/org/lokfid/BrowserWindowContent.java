@@ -4,12 +4,14 @@ import org.lwjgl.glfw.GLFW;
 import org.rusherhack.client.api.Globals;
 import org.rusherhack.client.api.RusherHackAPI;
 import org.rusherhack.client.api.feature.window.Window;
+import org.rusherhack.client.api.render.graphic.VectorGraphic;
 import org.rusherhack.client.api.ui.window.content.WindowContent;
 import org.rusherhack.client.api.ui.window.content.component.ButtonComponent;
 import org.rusherhack.client.api.ui.window.content.component.TextFieldComponent;
 import org.rusherhack.client.api.ui.window.view.SimpleView;
 import org.rusherhack.client.api.ui.window.view.WindowView;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,24 +22,31 @@ import java.util.List;
 public class BrowserWindowContent extends SimpleView implements Globals {
 
     private final BrowserPlugin plugin;
+    private final VectorGraphic[] icons = new VectorGraphic[3];
     private TextFieldComponent url;
 
     public BrowserWindowContent(BrowserPlugin plugin, Window window) {
         super(window, List.of());
         setContentList(generateMembers(plugin, window));
         this.plugin = plugin;
-
+        try {
+            this.icons[0] = new VectorGraphic("web/images/larrow.svg", 726, 726);
+            this.icons[1] = new VectorGraphic("web/images/rarrow.svg", 726, 726);
+            this.icons[2] = new VectorGraphic("web/images/reload.svg", 800, 800);
+        } catch (IOException | NullPointerException e) {
+            throw new RuntimeException("Failed to load graphics", e);
+        }
     }
 
     private List<? extends WindowContent> generateMembers(BrowserPlugin plugin, Window window) {
         List<WindowContent> components = new ArrayList<>();
         int buttonHeight = 12;
         int buttonWidth = 12;
-        components.add(new ButtonComponent(window, "<", buttonWidth, buttonHeight,
+        components.add(new ButtonComponent(window, "", buttonWidth, buttonHeight,
                 () -> plugin.getBrowser().goBack()));
-        components.add(new ButtonComponent(window, ">", buttonWidth, buttonHeight,
+        components.add(new ButtonComponent(window, "", buttonWidth, buttonHeight,
                 () -> plugin.getBrowser().goForward()));
-        components.add(new ButtonComponent(window, "RL", buttonWidth, buttonHeight,
+        components.add(new ButtonComponent(window, "", buttonWidth, buttonHeight,
                 () -> plugin.getBrowser().reloadIgnoreCache()));
         url = new TextFieldComponent(window, plugin.getBrowser().getURL(),
                 400 - buttonWidth * components.size());
@@ -48,19 +57,6 @@ public class BrowserWindowContent extends SimpleView implements Globals {
         });
         components.add(url);
         return components;
-    }
-
-    @Override
-    public void renderViewContent(double mouseX, double mouseY) {
-        url.setWidth(getWidth() - 12 * (getContent().size() - 1));
-        double x = getX();
-        double y = getY();
-        for (WindowContent content : getContent()) {
-            content.setX(x);
-            content.setY(y);
-            getHandler().getContentHandler().handleRenderContent(content, mouseX, mouseY, this);
-            x += content.getWidth();
-        }
     }
 
     @Override
@@ -85,8 +81,20 @@ public class BrowserWindowContent extends SimpleView implements Globals {
                 height,
                 0
         );
-        synchronized (getContent()) {
-            renderViewContent(mouseX, mouseY);
+        url.setWidth(getWidth() - 12 * (getContent().size() - 1));
+        double x = getX();
+        y = getY();
+        List<WindowContent> windowContents = getContent();
+        for (int i = 0; i < windowContents.size(); i++) {
+            WindowContent content = windowContents.get(i);
+            content.setX(x);
+            content.setY(y);
+            getHandler().getContentHandler().handleRenderContent(content, mouseX, mouseY, this);
+            if (i < icons.length) {
+                RusherHackAPI.getRenderer2D().drawGraphicRectangle(icons[i],
+                        x + 1, y + 1, content.getWidth() - 2, content.getHeight() - 2);
+            }
+            x += content.getWidth();
         }
     }
 
