@@ -11,7 +11,6 @@ This plugin provides a Chromium-based web-browser accessible through the Window 
 - Launch your RusherHack instance and open the Windows menu. A new window called Browser should appear
 
 ## TODO:
-- Graphic buttons
 - Persistent cookie storage
 - Configurable homepage
 - Tabs
