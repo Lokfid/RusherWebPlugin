@@ -1,7 +1,6 @@
 plugins {
 	id 'fabric-loom' version '1.7-SNAPSHOT'
 	id 'maven-publish'
-	id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 version = project.plugin_version
@@ -45,8 +44,6 @@ dependencies {
 
 	//rusherhack api
 	rusherhackApi "org.rusherhack:rusherhack-api:$minecraft_version-SNAPSHOT"
-
-	shadow 'me.friwi:jcefmaven:122.1.10'
 	modCompileOnly files("libs/mcef.jar")
 }
 
