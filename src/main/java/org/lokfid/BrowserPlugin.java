@@ -24,15 +24,14 @@ public class BrowserPlugin extends Plugin {
         //creating and registering a new module
         RusherHackAPI.getWindowManager().registerFeature(browser);
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            browser.shutDown();
-        }));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> browser.shutDown()));
 
     }
 
     @Override
     public void onUnload() {
-        browser.shutDown();
+        if (browser != null)
+            browser.shutDown();
     }
 
 }

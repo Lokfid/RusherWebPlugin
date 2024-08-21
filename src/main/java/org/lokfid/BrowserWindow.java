@@ -1,5 +1,7 @@
 package org.lokfid;
 
+import org.cef.network.CefCookie;
+import org.cef.network.CefCookieManager;
 import org.rusherhack.client.api.RusherHackAPI;
 import org.rusherhack.client.api.feature.window.ResizeableWindow;
 import org.rusherhack.client.api.render.graphic.IGraphic;
@@ -9,9 +11,8 @@ import org.rusherhack.client.api.ui.window.view.SimpleView;
 import org.rusherhack.client.api.ui.window.view.TabbedView;
 import org.rusherhack.client.api.ui.window.view.WindowView;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.*;
+import java.util.*;
 
 /**
  * @author Doogie13
@@ -19,14 +20,18 @@ import java.util.List;
  */
 public class BrowserWindow extends ResizeableWindow {
 
+    private static final File COOKIES_DIR = new File("rusherhack-web-cookies/");
+
     private final List<BrowserWindowView> browsers = new ArrayList<>();
     private final SimpleView simpleView;
     private TabbedView tabbedView = null;
 
     private IGraphic[] graphics = new IGraphic[50];
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public BrowserWindow(BrowserPlugin plugin) {
         super("Rusher Browser", 400, 320);
+        loadCookies();
         browsers.add(new BrowserWindowView(this));
         try {
             for (int i = 1; i <= 50; i++) {
@@ -86,12 +91,53 @@ public class BrowserWindow extends ResizeableWindow {
         for (BrowserWindowView browserWindowView : browsers)
             if (browserWindowView.hasBrowser())
                 browserWindowView.getBrowser().close();
+        CefCookieManager.getGlobalManager().visitAllCookies((cefCookie, i, i1, boolRef) -> {
+            saveCookie(cefCookie);
+            return true;
+        });
+    }
+
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    private static void saveCookie(CefCookie cefCookie) {
+        File file = new File(COOKIES_DIR, cefCookie.name);
+        if (!file.exists()) {
+            file.getParentFile().mkdirs();
+        }
+        else {
+            file.delete();
+        }
+        try (
+                FileOutputStream fos = new FileOutputStream(file);
+                ObjectOutputStream oos = new ObjectOutputStream(fos)
+        ) {
+            file.createNewFile();
+            oos.writeObject(new SerialisableCefCookie(cefCookie));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    private static void loadCookies() {
+        File[] files = COOKIES_DIR.listFiles();
+        if (files == null) return;
+        for (File file : files) {
+            if (file.isDirectory())
+                continue;
+            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+                CefCookie cookie = ((SerialisableCefCookie) ois.readObject()).getCookie();
+                CefCookieManager.getGlobalManager().setCookie(cookie.domain, cookie);
+            } catch (IOException | ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     public void unsubscribeAll(BrowserWindowView ignored) {
         for (BrowserWindowView b : browsers) {
             if (ignored != null && b == ignored)
                 continue;
+            b.getBrowser().setFocus(false);
             RusherHackAPI.getEventBus().unsubscribe(b);
             b.subscribed = false;
         }
