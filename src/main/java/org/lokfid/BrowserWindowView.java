@@ -1,19 +1,23 @@
 package org.lokfid;
 
+import com.cinemamod.mcef.MCEF;
+import com.cinemamod.mcef.MCEFBrowser;
 import org.lwjgl.glfw.GLFW;
 import org.rusherhack.client.api.Globals;
 import org.rusherhack.client.api.RusherHackAPI;
 import org.rusherhack.client.api.events.client.input.EventMouse;
-import org.rusherhack.client.api.feature.window.Window;
 import org.rusherhack.client.api.render.graphic.VectorGraphic;
 import org.rusherhack.client.api.ui.window.content.WindowContent;
 import org.rusherhack.client.api.ui.window.content.component.ButtonComponent;
 import org.rusherhack.client.api.ui.window.content.component.TextFieldComponent;
 import org.rusherhack.client.api.ui.window.view.SimpleView;
 import org.rusherhack.client.api.ui.window.view.WindowView;
+import org.rusherhack.core.event.stage.Stage;
 import org.rusherhack.core.event.subscribe.Subscribe;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,18 +25,20 @@ import java.util.List;
  * @author Doogie13
  * @since 19/08/2024
  */
-public class BrowserWindowContent extends SimpleView implements Globals {
+public class BrowserWindowView extends SimpleView implements Globals {
 
-    private final BrowserPlugin plugin;
     private final VectorGraphic[] icons = new VectorGraphic[3];
+    private final BrowserWindow window;
     private TextFieldComponent url;
+
+    private MCEFBrowser browser;
 
     boolean subscribed;
 
-    public BrowserWindowContent(BrowserPlugin plugin, Window window) {
+    public BrowserWindowView(BrowserWindow window) {
         super(window, List.of());
-        setContentList(generateMembers(plugin, window));
-        this.plugin = plugin;
+        this.window = window;
+        setContentList(generateMembers());
         try {
             this.icons[0] = new VectorGraphic("web/images/larrow.svg", 726, 726);
             this.icons[1] = new VectorGraphic("web/images/rarrow.svg", 726, 726);
@@ -43,17 +49,17 @@ public class BrowserWindowContent extends SimpleView implements Globals {
     }
 
     // Generates buttons and url query box
-    private List<? extends WindowContent> generateMembers(BrowserPlugin plugin, Window window) {
+    private List<? extends WindowContent> generateMembers() {
         List<WindowContent> components = new ArrayList<>();
         int buttonHeight = 12;
         int buttonWidth = 12;
         components.add(new ButtonComponent(window, "", buttonWidth, buttonHeight,
-                () -> plugin.getBrowser().goBack()));
+                () -> getBrowser().goBack()));
         components.add(new ButtonComponent(window, "", buttonWidth, buttonHeight,
-                () -> plugin.getBrowser().goForward()));
+                () -> getBrowser().goForward()));
         components.add(new ButtonComponent(window, "", buttonWidth, buttonHeight,
-                () -> plugin.getBrowser().reloadIgnoreCache()));
-        url = new TextFieldComponent(window, plugin.getBrowser().getURL(),
+                () -> getBrowser().reloadIgnoreCache()));
+        url = new TextFieldComponent(window, getBrowser().getURL(),
                 400 - buttonWidth * components.size());
         url.setReturnCallback(this::processSearchQuery);
         components.add(url);
@@ -61,32 +67,42 @@ public class BrowserWindowContent extends SimpleView implements Globals {
     }
 
     private void processSearchQuery(String text) {
-        if (text.contains("://") || text.split("\\.").length > 1) {
-            plugin.getBrowser().loadURL(text);
-            plugin.getBrowser().setFocus(true);
+        if (testURL(text)) {
+            getBrowser().loadURL(text);
+            getBrowser().setFocus(true);
         } else // we have a search query
-            plugin.getBrowser().loadURL(String.format("https://duckduckgo.com/?q=%s", text));
+            getBrowser().loadURL(String.format("https://duckduckgo.com/?q=%s", text));
         url.setFocused(false);
+    }
+
+    private boolean testURL(String text) {
+        try {
+            return !new URL(text).getAuthority().isEmpty();
+        } catch (MalformedURLException e) {
+            return false;
+        }
     }
 
     @Override
     public void renderContent(double mouseX, double mouseY, WindowView parent) {
 
         if (!subscribed) {
+            window.unsubscribeAll(this);
             RusherHackAPI.getEventBus().subscribe(this);
+            System.out.println("YUPI");
             subscribed = true;
         }
 
         double y = getY() + 12;
         double height = getHeight() - 12;
         // todo: scale control
-        plugin.getBrowser().resize((int) (getWidth()) * 2, (int) (height) * 2);
+        getBrowser().resize((int) (getWidth()) * 2, (int) (height) * 2);
 
         if (!url.isFocused())
-            url.setValue(plugin.getBrowser().getURL());
+            url.setValue(getBrowser().getURL());
 
         RusherHackAPI.getRenderer2D()._drawTextureRectangle(
-                plugin.getBrowser().getRenderer().getTextureID(),
+                getBrowser().getRenderer().getTextureID(),
                 (int) getWidth(),
                 (int) height,
                 getX(),
@@ -114,58 +130,84 @@ public class BrowserWindowContent extends SimpleView implements Globals {
 
     @Subscribe
     public void mouseMoved(EventMouse.Move event) {
+        if (mc.screen != RusherHackAPI.getThemeManager().getWindowsScreen()) {
+            window.unsubscribeAll(null);
+            return;
+        }
         int mouseX = (int) ((event.getMouseX()) - getX() * 2);
         int mouseY = (int) ((event.getMouseY()) - (getY() + 12) * 2);
-        plugin.getBrowser().sendMouseMove(
+        getBrowser().sendMouseMove(
                 mouseX,
                 mouseY
         );
     }
 
+    // this shouldn't be needed... wtf?
+    @Subscribe(stage = Stage.PRE)
+    public void mouseClickedEvent(EventMouse.Key event) {
+        if (event.getAction() != GLFW.GLFW_PRESS)
+            return;
+        if (mc.screen != RusherHackAPI.getThemeManager().getWindowsScreen()) {
+            window.unsubscribeAll(null);
+            return;
+        }
+        mouseClicked(event.getMouseX(), event.getMouseY(), event.getButton());
+    }
+
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        plugin.getBrowser().sendMousePress(
+        getBrowser().setFocus(true);
+        getBrowser().sendMousePress(
                 (int) ((mouseX - getX()) * 2),
                 (int) ((mouseY - getY()- 12) * 2),
                 button
         );
-        if (button == GLFW.GLFW_MOUSE_BUTTON_4 && plugin.getBrowser().canGoBack())
-            plugin.getBrowser().goBack();
-        else if (button == GLFW.GLFW_MOUSE_BUTTON_5 && plugin.getBrowser().canGoForward())
-            plugin.getBrowser().goForward();
-        plugin.getBrowser().setFocus(true);
+        System.out.println(
+                (int) ((mouseX - getX()) * 2) + " " +
+                        (int) ((mouseY - getY()- 12) * 2) + " " +
+                        button
+        );
+        if (button == GLFW.GLFW_MOUSE_BUTTON_4 && getBrowser().canGoBack())
+            getBrowser().goBack();
+        else if (button == GLFW.GLFW_MOUSE_BUTTON_5 && getBrowser().canGoForward())
+            getBrowser().goForward();
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
         if (!isHovered(mouseX, mouseY)) return super.mouseScrolled(mouseX, mouseY, delta);
-        plugin.getBrowser().sendMouseWheel(
+        getBrowser().sendMouseWheel(
                 (int) ((mouseX - getX()) * 2),
                 (int) ((mouseY - getY()- 12) * 2),
                 delta,
                 0
         );
-        plugin.getBrowser().setFocus(true);
+        getBrowser().setFocus(true);
         return super.mouseScrolled(mouseX, mouseY, delta);
     }
 
     @Override
     public void mouseReleased(double mouseX, double mouseY, int button) {
-        plugin.getBrowser().sendMouseRelease(
+        getBrowser().sendMouseRelease(
                 (int) ((mouseX - getX()) * 2),
                 (int) ((mouseY - getY()- 12) * 2),
                 button
         );
-        plugin.getBrowser().setFocus(true);
+        System.out.println(
+                (int) ((mouseX - getX()) * 2) + " " +
+                        (int) ((mouseY - getY()- 12) * 2) + " " +
+                        button
+        );
+        getBrowser().setFocus(true);
         super.mouseReleased(mouseX, mouseY, button);
     }
 
     @Override
     public boolean keyTyped(int key, int scanCode, int modifiers) {
         if (!url.isFocused()) {
-            plugin.getBrowser().sendKeyPress(key, scanCode, modifiers);
-            plugin.getBrowser().setFocus(true);
+            getBrowser().sendKeyPress(key, scanCode, modifiers);
+            getBrowser().setFocus(true);
         }
         return super.keyTyped(key, scanCode, modifiers);
     }
@@ -173,7 +215,38 @@ public class BrowserWindowContent extends SimpleView implements Globals {
     @Override
     public boolean charTyped(char character) {
         if (!url.isFocused())
-            plugin.getBrowser().sendKeyTyped(character, 0);
+            getBrowser().sendKeyTyped(character, 0);
         return super.charTyped(character);
+    }
+
+
+    public boolean hasBrowser() {
+        return browser != null;
+    }
+
+    public MCEFBrowser getBrowser() {
+        if (browser == null) {
+            browser = MCEF.createBrowser("https://start.duckduckgo.com/", true);
+            browser.resize(400, 300);
+        }
+        return browser;
+    }
+
+    public void resetBrowser() {
+        if (!hasBrowser())
+            return;
+        browser.close();
+        browser = null;
+        RusherHackAPI.getEventBus().unsubscribe(this);
+        subscribed = false;
+    }
+
+    @Override
+    public String getDisplayName() {
+        try {
+            return new URL(getBrowser().getURL()).getAuthority();
+        } catch (MalformedURLException e) {
+            return "Tab";
+        }
     }
 }
