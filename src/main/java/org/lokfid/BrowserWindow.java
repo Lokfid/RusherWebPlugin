@@ -4,9 +4,14 @@ import org.rusherhack.client.api.RusherHackAPI;
 import org.rusherhack.client.api.feature.window.ResizeableWindow;
 import org.rusherhack.client.api.render.graphic.IGraphic;
 import org.rusherhack.client.api.render.graphic.TextureGraphic;
+import org.rusherhack.client.api.ui.window.content.component.ButtonComponent;
+import org.rusherhack.client.api.ui.window.view.SimpleView;
+import org.rusherhack.client.api.ui.window.view.TabbedView;
 import org.rusherhack.client.api.ui.window.view.WindowView;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Doogie13
@@ -14,11 +19,15 @@ import java.io.IOException;
  */
 public class BrowserWindow extends ResizeableWindow {
 
+    private final List<BrowserWindowView> browsers = new ArrayList<>();
+    private final SimpleView simpleView;
+    private TabbedView tabbedView = null;
+
     private IGraphic[] graphics = new IGraphic[50];
 
     public BrowserWindow(BrowserPlugin plugin) {
         super("Rusher Browser", 400, 320);
-        wv = new BrowserWindowContent(plugin, this);
+        browsers.add(new BrowserWindowView(this));
         try {
             for (int i = 1; i <= 50; i++) {
                 StringBuilder s = new StringBuilder(String.valueOf(i));
@@ -31,13 +40,32 @@ public class BrowserWindow extends ResizeableWindow {
                 plugin.getLogger().error(s.toString());
             graphics = null;
         }
+        ButtonComponent newTabButton = new ButtonComponent(this, "New Tab", 50, 12, () -> {
+            BrowserWindowView browserWindowView = new BrowserWindowView(this);
+            browsers.add(browserWindowView);
+            tabbedView.setActiveTabView(browserWindowView);
+        });
+        ButtonComponent closeTabButton = new ButtonComponent(this, "Close Tab", 50, 12, () -> {
+            BrowserWindowView browserWindowView = (BrowserWindowView) tabbedView.getActiveTabView();
+            if (browsers.size() > 1) {
+                int i = browsers.indexOf(browserWindowView);
+                browsers.remove(browserWindowView);
+                if (browserWindowView.hasBrowser())
+                    browserWindowView.getBrowser().close();
+                tabbedView.setActiveTabView(browsers.get(Math.max(i - 1, 0)));
+            } else
+                browserWindowView.resetBrowser();
+        });
+        ButtonComponent homeButton = new ButtonComponent(this, "Home", 50, 12,
+                () -> ((BrowserWindowView) tabbedView.getActiveTabView()).resetBrowser());
+        tabbedView = new TabbedView(this, (List) browsers);
+        simpleView = new SimpleView(this,
+                List.of(new ButtonHeader(this, newTabButton, closeTabButton, homeButton), tabbedView));
     }
-
-    private final BrowserWindowContent wv;
 
     @Override
     public WindowView getRootView() {
-        return wv;
+        return simpleView;
     }
 
     @Override
@@ -50,7 +78,22 @@ public class BrowserWindow extends ResizeableWindow {
     @Override
     public void onClose() {
         super.onClose();
-        RusherHackAPI.getEventBus().unsubscribe(wv);
-        wv.subscribed = true;
+        unsubscribeAll(null);
+    }
+
+    public void shutDown() {
+        onClose();
+        for (BrowserWindowView browserWindowView : browsers)
+            if (browserWindowView.hasBrowser())
+                browserWindowView.getBrowser().close();
+    }
+
+    public void unsubscribeAll(BrowserWindowView ignored) {
+        for (BrowserWindowView b : browsers) {
+            if (ignored != null && b == ignored)
+                continue;
+            RusherHackAPI.getEventBus().unsubscribe(b);
+            b.subscribed = false;
+        }
     }
 }
