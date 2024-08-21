@@ -13,7 +13,6 @@ This plugin provides a Chromium-based web-browser accessible through the Window 
 ## TODO:
 - Persistent cookie storage
 - Configurable homepage
-- Tabs
 
 ## Credits
 - [Lokfid](https://github.com/Lokfid) (making basic foundation and idea)
