@@ -75,12 +75,9 @@ public class BrowserWindowView extends SimpleView implements Globals {
         url.setFocused(false);
     }
 
+    // check if text is a search term or a URL
     private boolean testURL(String text) {
-        try {
-            return !new URL(text).getAuthority().isEmpty();
-        } catch (MalformedURLException e) {
-            return false;
-        }
+        return !text.contains(" ") && (text.split("\\.").length > 1 || text.contains("://"));
     }
 
     @Override
@@ -89,7 +86,7 @@ public class BrowserWindowView extends SimpleView implements Globals {
         if (!subscribed) {
             window.unsubscribeAll(this);
             RusherHackAPI.getEventBus().subscribe(this);
-            System.out.println("YUPI");
+            getBrowser().setFocus(true);
             subscribed = true;
         }
 
@@ -162,21 +159,16 @@ public class BrowserWindowView extends SimpleView implements Globals {
                 (int) ((mouseY - getY()- 12) * 2),
                 button
         );
-        System.out.println(
-                (int) ((mouseX - getX()) * 2) + " " +
-                        (int) ((mouseY - getY()- 12) * 2) + " " +
-                        button
-        );
         if (button == GLFW.GLFW_MOUSE_BUTTON_4 && getBrowser().canGoBack())
             getBrowser().goBack();
         else if (button == GLFW.GLFW_MOUSE_BUTTON_5 && getBrowser().canGoForward())
             getBrowser().goForward();
-        return super.mouseClicked(mouseX, mouseY, button);
+        return true;
     }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
-        if (!isHovered(mouseX, mouseY)) return super.mouseScrolled(mouseX, mouseY, delta);
+        if (!isHovered(mouseX, mouseY) || !subscribed) return super.mouseScrolled(mouseX, mouseY, delta);
         getBrowser().sendMouseWheel(
                 (int) ((mouseX - getX()) * 2),
                 (int) ((mouseY - getY()- 12) * 2),
@@ -189,15 +181,11 @@ public class BrowserWindowView extends SimpleView implements Globals {
 
     @Override
     public void mouseReleased(double mouseX, double mouseY, int button) {
+        if (!subscribed) return;
         getBrowser().sendMouseRelease(
                 (int) ((mouseX - getX()) * 2),
                 (int) ((mouseY - getY()- 12) * 2),
                 button
-        );
-        System.out.println(
-                (int) ((mouseX - getX()) * 2) + " " +
-                        (int) ((mouseY - getY()- 12) * 2) + " " +
-                        button
         );
         getBrowser().setFocus(true);
         super.mouseReleased(mouseX, mouseY, button);
@@ -205,6 +193,7 @@ public class BrowserWindowView extends SimpleView implements Globals {
 
     @Override
     public boolean keyTyped(int key, int scanCode, int modifiers) {
+        if (!subscribed) return super.keyTyped(key, scanCode, modifiers);
         if (!url.isFocused()) {
             getBrowser().sendKeyPress(key, scanCode, modifiers);
             getBrowser().setFocus(true);
@@ -214,6 +203,7 @@ public class BrowserWindowView extends SimpleView implements Globals {
 
     @Override
     public boolean charTyped(char character) {
+        if (!subscribed) return super.charTyped(character);
         if (!url.isFocused())
             getBrowser().sendKeyTyped(character, 0);
         return super.charTyped(character);
@@ -221,7 +211,7 @@ public class BrowserWindowView extends SimpleView implements Globals {
 
 
     public boolean hasBrowser() {
-        return browser != null;
+        return getBrowser() != null;
     }
 
     public MCEFBrowser getBrowser() {
@@ -235,7 +225,7 @@ public class BrowserWindowView extends SimpleView implements Globals {
     public void resetBrowser() {
         if (!hasBrowser())
             return;
-        browser.close();
+        getBrowser().close();
         browser = null;
         RusherHackAPI.getEventBus().unsubscribe(this);
         subscribed = false;
