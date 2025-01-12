@@ -5,7 +5,7 @@ This plugin provides a Chromium-based web-browser accessible through the Window 
 
 ## Usage
 - Download and install the mod [MCEF](https://modrinth.com/mod/mcef)
-- Download the plugin from the Releases tab into your `.minecraft/Rusherhack/Plugins` folder (create the folder if it doesnt exist)
+- Download the plugin from the Releases tab into your `.minecraft/rusherhack/plugins` folder (create the folder if it doesnt exist)
 - Edit the launch arguments for the instance of Minecraft you are loading RusherHack from to include the entry
 `-Drusherhack.enablePlugins=true` (make sure to set it for jvm and not mc in some launchers)
 - Launch your RusherHack instance and open the Windows menu. A new window called Browser should appear
