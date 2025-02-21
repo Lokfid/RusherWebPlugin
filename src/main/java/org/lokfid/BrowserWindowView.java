@@ -18,6 +18,9 @@ import org.rusherhack.core.event.subscribe.Subscribe;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,7 +29,7 @@ import java.util.List;
  * @since 19/08/2024
  */
 public class BrowserWindowView extends SimpleView implements Globals {
-
+    private static final Path LANDING_PAGE = Paths.get(mc.gameDirectory.getPath(), "rusherhack/config/landingpage");
     private final VectorGraphic[] icons = new VectorGraphic[3];
     private final BrowserWindow window;
     private TextFieldComponent url;
@@ -215,7 +218,12 @@ public class BrowserWindowView extends SimpleView implements Globals {
 
     public MCEFBrowser getBrowser() {
         if (browser == null) {
-            browser = MCEF.createBrowser("https://start.duckduckgo.com/", true);
+            try {
+                browser = MCEF.createBrowser(Files.readString(LANDING_PAGE), true);
+            } catch (IOException e) {
+                return null;
+            }
+            //browser = MCEF.createBrowser("https://start.duckduckgo.com", true);
             browser.resize(400, 300);
         }
         return browser;

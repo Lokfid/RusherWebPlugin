@@ -21,7 +21,6 @@ import java.util.*;
 public class BrowserWindow extends ResizeableWindow {
 
     private static final File COOKIES_DIR = new File("rusherhack-web-cookies/");
-
     private final List<BrowserWindowView> browsers = new ArrayList<>();
     private final SimpleView simpleView;
     private TabbedView tabbedView = null;
