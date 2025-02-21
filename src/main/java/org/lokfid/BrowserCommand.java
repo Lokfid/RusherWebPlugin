@@ -19,7 +19,7 @@ public class BrowserCommand extends Command {
     }
 
     @CommandExecutor(subCommand = "landingpage")
-    @CommandExecutor.Argument(value = {"string"} )
+    @CommandExecutor.Argument(value = {"url"} )
     public Component change(String string){
         //i have no idea why but it wont work with https:// or http:// xD
         if(!string.startsWith("https") || !string.startsWith("http")) {
