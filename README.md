@@ -10,8 +10,8 @@ This plugin provides a Chromium-based web-browser accessible through the Window 
 `-Drusherhack.enablePlugins=true` (make sure to set it for jvm and not mc in some launchers)
 - Launch your RusherHack instance and open the Windows menu. A new window called Browser should appear
 
-## TODO:
-- Configurable homepage
+## Settings
+- Now you can configure your homepage/landingpage using `*browser landingpage <url>` command in chat
 
 ## Credits
 - [Lokfid](https://github.com/Lokfid) (making basic foundation and idea)
