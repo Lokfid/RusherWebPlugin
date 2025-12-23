@@ -100,7 +100,7 @@ public class BrowserWindowView extends SimpleView implements Globals {
 
         if (!url.isFocused())
             url.setValue(getBrowser().getURL());
-        RusherHackAPI.getRenderer2D()._drawTextureRectangle(
+        RusherHackAPI.getRenderer2D().drawTextureRectangle(
                 getBrowser().getRenderer().getTextureID(),
                 (int) getWidth(),
                 (int) height,
